@@ -29,6 +29,11 @@ export default function ReplacePlanPage() {
   const [replacementPlanType, setReplacementPlanType] = React.useState("");
   const [planTypes, setPlanTypes] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [nonBrokered, setNonBrokered] = React.useState(false);
+  const [includeSplits, setIncludeSplits] = React.useState("Yes");
+  const [includeContributions, setIncludeContributions] = React.useState("No");
+  const [includeEligibilityRules, setIncludeEligibilityRules] =
+    React.useState("No");
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -99,15 +104,29 @@ export default function ReplacePlanPage() {
 
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Select New Plan Type</CardTitle>
+            <CardTitle>Add Plan</CardTitle>
             <CardDescription>
-              Choose the type of plan you want to replace the current{" "}
-              {plan?.plan_type_info?.plan_type_name || plan?.plan_type} with
+              Configure the replacement plan for {account}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            {/* Add Plan By */}
             <div className="space-y-2">
-              <label className="block text-sm text-gray-600">Plan Type</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Add Plan By
+              </label>
+              <div className="p-3 bg-gray-50 rounded-md border">
+                <span className="text-sm text-gray-600">
+                  Creating a Plan (Any Carrier)
+                </span>
+              </div>
+            </div>
+
+            {/* Plan Type */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Plan Type
+              </label>
               <Select
                 value={replacementPlanType}
                 onValueChange={(v) => setReplacementPlanType(v)}
@@ -130,17 +149,174 @@ export default function ReplacePlanPage() {
               </Select>
             </div>
 
-            <div className="flex justify-end mt-4">
+            {/* Origination Reason */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Origination Reason
+              </label>
+              <div className="p-3 bg-gray-50 rounded-md border">
+                <span className="text-sm text-gray-600">Replacement</span>
+              </div>
+              <div className="flex items-center space-x-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="non-brokered"
+                  checked={nonBrokered}
+                  onChange={(e) => setNonBrokered(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="non-brokered" className="text-sm text-gray-700">
+                  Non-Brokered
+                </label>
+              </div>
+            </div>
+
+            {/* Include Splits */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Include Splits
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="splits-yes"
+                    name="includeSplits"
+                    value="Yes"
+                    checked={includeSplits === "Yes"}
+                    onChange={(e) => setIncludeSplits(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="splits-yes"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Yes
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="splits-no"
+                    name="includeSplits"
+                    value="No"
+                    checked={includeSplits === "No"}
+                    onChange={(e) => setIncludeSplits(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="splits-no"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    No
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Include Contributions */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Include Contributions
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="contributions-yes"
+                    name="includeContributions"
+                    value="Yes"
+                    checked={includeContributions === "Yes"}
+                    onChange={(e) => setIncludeContributions(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="contributions-yes"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Yes
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="contributions-no"
+                    name="includeContributions"
+                    value="No"
+                    checked={includeContributions === "No"}
+                    onChange={(e) => setIncludeContributions(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="contributions-no"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    No
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Include Eligibility Rules */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Include Eligibility Rules
+              </label>
+              <div className="flex space-x-4">
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="eligibility-yes"
+                    name="includeEligibilityRules"
+                    value="Yes"
+                    checked={includeEligibilityRules === "Yes"}
+                    onChange={(e) => setIncludeEligibilityRules(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="eligibility-yes"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    Yes
+                  </label>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="radio"
+                    id="eligibility-no"
+                    name="includeEligibilityRules"
+                    value="No"
+                    checked={includeEligibilityRules === "No"}
+                    onChange={(e) => setIncludeEligibilityRules(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="eligibility-no"
+                    className="ml-2 text-sm text-gray-700"
+                  >
+                    No
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-3 pt-4">
+              <Link
+                href={`/account-dashboard?account=${encodeURIComponent(
+                  account
+                )}`}
+              >
+                <Button variant="outline">Cancel</Button>
+              </Link>
               <Link
                 href={`/plan-config?account=${encodeURIComponent(
                   account
-                )}&replaceId=${
-                  plan?.plan_type
-                }&replaceType=${encodeURIComponent(replacementPlanType)}`}
+                )}&replaceId=${plan?.plan_id}&replaceType=${encodeURIComponent(
+                  replacementPlanType
+                )}&nonBrokered=${nonBrokered}&includeSplits=${includeSplits}&includeContributions=${includeContributions}&includeEligibilityRules=${includeEligibilityRules}`}
               >
-                <Button disabled={!replacementPlanType || loading}>
-                  Continue to Configuration
-                </Button>
+                <Button disabled={!replacementPlanType || loading}>Next</Button>
               </Link>
             </div>
           </CardContent>

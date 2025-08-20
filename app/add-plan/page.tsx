@@ -18,7 +18,17 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { planTypes } from "../_data/mock";
+
+const PLAN_TYPES = [
+  "Medical PPO",
+  "Medical HMO",
+  "Dental PPO",
+  "Dental HMO",
+  "Vision Plan",
+  "Life Insurance",
+  "Disability Insurance",
+  "HSA Plan",
+];
 
 export default function AddPlanPage() {
   const search = useSearchParams();
@@ -67,7 +77,7 @@ export default function AddPlanPage() {
                     <SelectValue placeholder="Select a plan type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {planTypes.map((t: string) => (
+                    {PLAN_TYPES.map((t: string) => (
                       <SelectItem key={t} value={t}>
                         {t}
                       </SelectItem>

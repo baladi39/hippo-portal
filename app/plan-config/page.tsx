@@ -14,7 +14,27 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { billingTypes, carriers, fundingTypes } from "../_data/mock";
+
+const CARRIERS = [
+  "AFLAC",
+  "Blue Cross Blue Shield",
+  "Aetna",
+  "Cigna",
+  "UnitedHealthcare",
+  "Delta Dental",
+  "VSP",
+  "MetLife",
+  "Guardian",
+];
+
+const BILLING_TYPES = ["Direct Bill", "List Bill", "Self-Administered"];
+
+const FUNDING_TYPES = [
+  "Fully Insured",
+  "Self-Funded",
+  "Level Funded",
+  "Stop Gap",
+];
 
 export default function PlanConfigPage() {
   const search = useSearchParams();
@@ -87,7 +107,7 @@ export default function PlanConfigPage() {
                     <SelectValue placeholder="Select carrier" />
                   </SelectTrigger>
                   <SelectContent>
-                    {carriers.map((c: string) => (
+                    {CARRIERS.map((c: string) => (
                       <SelectItem key={c} value={c}>
                         {c}
                       </SelectItem>
@@ -106,7 +126,7 @@ export default function PlanConfigPage() {
                     <SelectValue placeholder="Select billing type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {billingTypes.map((t: string) => (
+                    {BILLING_TYPES.map((t: string) => (
                       <SelectItem key={t} value={t}>
                         {t}
                       </SelectItem>
@@ -146,7 +166,7 @@ export default function PlanConfigPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {fundingTypes.map((f: string) => (
+                    {FUNDING_TYPES.map((f: string) => (
                       <SelectItem key={f} value={f}>
                         {f}
                       </SelectItem>

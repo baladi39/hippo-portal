@@ -17,7 +17,7 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // naive client-side navigation after "login"
-    window.location.href = "/dashboard";
+    window.location.href = "/accounts";
   };
 
   return (

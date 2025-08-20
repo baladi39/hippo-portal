@@ -167,7 +167,8 @@ export const planService = {
         .select(
           `
           *,
-          account:accounts(*)
+          account:accounts(*),
+          plan_type_info:plan_types(plan_type_name, category)
         `
         )
         .order("plan_id");
@@ -209,11 +210,12 @@ export const planService = {
         .select(
           `
           *,
-          account:accounts!inner(*)
+          account:accounts!inner(*),
+          plan_type_info:plan_types(plan_type_name, category)
         `
         )
         .eq("accounts.account", accountName)
-        .order("plan");
+        .order("plan_id");
 
       if (error) {
         console.error("Error fetching plans by account name:", error);
@@ -233,7 +235,8 @@ export const planService = {
         .select(
           `
           *,
-          account:accounts(*)
+          account:accounts(*),
+          plan_type_info:plan_types(plan_type_name, category)
         `
         )
         .eq("plan_id", planId)
@@ -319,12 +322,11 @@ export const planService = {
         .select(
           `
           *,
-          account:accounts(*)
+          account:accounts(*),
+          plan_type_info:plan_types(plan_type_name, category)
         `
         )
-        .or(
-          `plan.ilike.%${query}%,carrier.ilike.%${query}%,plan_type.ilike.%${query}%`
-        )
+        .or(`carrier.ilike.%${query}%,plan_type.ilike.%${query}%`)
         .order("plan_id");
 
       if (error) {
@@ -334,6 +336,32 @@ export const planService = {
       return data || [];
     } catch (err) {
       console.error("Error searching plans:", err);
+      throw err;
+    }
+  },
+};
+
+// Plan types operations
+export const planTypeService = {
+  async getAll(): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from("plan_types")
+        .select("plan_type_name")
+        .eq("is_active", true)
+        .order("plan_type_name");
+
+      if (error) {
+        console.error("Error fetching plan types:", error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      // Extract the plan type names from the data
+      const types = data?.map((item: any) => item.plan_type_name) || [];
+
+      return types;
+    } catch (err) {
+      console.error("Error fetching plan types:", err);
       throw err;
     }
   },

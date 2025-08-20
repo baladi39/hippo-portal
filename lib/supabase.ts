@@ -19,21 +19,28 @@ export interface Account {
   updated_date?: string;
 }
 
+export interface PlanType {
+  plan_type_id: number;
+  plan_type_name: string;
+  category: string;
+  is_active: boolean;
+  created_date: string;
+  updated_date?: string;
+}
+
 export interface Plan {
   plan_id: number;
   account_id: number;
-  plan: string;
   carrier: string;
   plan_type: string;
-  enrollment: number;
-  monthly_employee_cost: number;
-  monthly_employer_cost: number;
-  annual_employee_cost: number;
-  annual_employer_cost: number;
-  annual_revenue: number;
-  annual_commission: number;
+  plan_type_id?: number;
+  commission_paid_by_carrier?: string;
+  billing?: string;
+  policy_group_number?: string;
   effective_date: string;
   renewal_date: string;
+  cancellation_date?: string;
+  status: string;
   created_date: string;
   updated_date?: string;
 }
@@ -41,6 +48,7 @@ export interface Plan {
 // Extended type for joined data (used in views)
 export interface PlanWithAccount extends Plan {
   account: Account;
+  plan_type_info?: PlanType;
 }
 
 export interface PlanConfig {

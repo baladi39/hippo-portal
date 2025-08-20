@@ -30,9 +30,40 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlanWithAccount } from "@/lib/supabase";
-import { MoreHorizontal } from "lucide-react";
+import { Filter, MoreHorizontal, Search } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+
+// Filter constants
+const LINES_OF_COVERAGE = [
+  "All",
+  "Medical",
+  "Dental",
+  "Vision",
+  "Life",
+  "Disability",
+];
+const PLAN_TYPES = [
+  "All",
+  "PPO",
+  "HMO",
+  "Vision Plan",
+  "Life Insurance",
+  "AD&D",
+];
+const FUNDING_TYPES = ["All", "Fully Insured", "Self-Funded", "Level Funded"];
+const EMPLOYEE_TYPES = ["All", "Full-Time", "Part-Time", "Seasonal"];
+const LOCATIONS = ["All", "Main Office", "Remote", "Field"];
+
+interface PlanFilters {
+  linesOfCoverage: string;
+  planTypes: string;
+  fundingTypes: string;
+  employeeTypes: string;
+  locations: string;
+  secondaryPlanType: string;
+  nonBrokered: string;
+}
 
 interface PlansTabProps {
   selectedAccount: string | null;
@@ -40,241 +71,245 @@ interface PlansTabProps {
 }
 
 export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
-  const [filters, setFilters] = useState({
-    listView: "",
-    linesOfCoverage: "",
-    planTypes: "",
-    fundingType: "",
-    locations: "",
-    employeeTypes: "",
-    secondaryPlanType: "",
-    nonBrokered: "",
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState<PlanFilters>({
+    linesOfCoverage: "All",
+    planTypes: "All",
+    fundingTypes: "All",
+    employeeTypes: "All",
+    locations: "All",
+    secondaryPlanType: "All",
+    nonBrokered: "All",
   });
 
   // Filter the plans based on selected filters
   const filteredPlans = accountPlans.filter((plan) => {
-    if (filters.planTypes && plan.plan_type !== filters.planTypes) return false;
-    if (filters.linesOfCoverage && plan.carrier !== filters.linesOfCoverage)
+    if (
+      filters.planTypes !== "All" &&
+      plan.plan_type_info?.plan_type_name !== filters.planTypes
+    )
+      return false;
+    if (
+      filters.linesOfCoverage !== "All" &&
+      plan.carrier !== filters.linesOfCoverage
+    )
       return false;
     // Add more filter logic as needed
     return true;
   });
 
-  const handleFilterChange = (filterKey: string, value: string) => {
+  const handleFilterChange = (filterType: keyof PlanFilters, value: string) => {
     setFilters((prev) => ({
       ...prev,
-      [filterKey]: value,
+      [filterType]: value,
     }));
   };
 
   const clearAllFilters = () => {
     setFilters({
-      listView: "",
-      linesOfCoverage: "",
-      planTypes: "",
-      fundingType: "",
-      locations: "",
-      employeeTypes: "",
-      secondaryPlanType: "",
-      nonBrokered: "",
+      linesOfCoverage: "All",
+      planTypes: "All",
+      fundingTypes: "All",
+      employeeTypes: "All",
+      locations: "All",
+      secondaryPlanType: "All",
+      nonBrokered: "All",
     });
   };
 
   return (
     <div className="mt-6">
-      {/* Filter Section */}
+      {/* Filters Section */}
       <Card className="mb-6">
-        <CardHeader className="pb-4">
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">Group by</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="plans-products"
-                  name="groupBy"
-                  defaultChecked
-                  className="w-4 h-4"
-                />
-                <label htmlFor="plans-products" className="text-sm">
-                  Plans and Products
-                </label>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  id="line-coverage"
-                  name="groupBy"
-                  className="w-4 h-4"
-                />
-                <label htmlFor="line-coverage" className="text-sm">
-                  Line of Coverage
-                </label>
-              </div>
+            <div>
+              <CardTitle className="text-lg">
+                Group by Plans and Products
+              </CardTitle>
+              <CardDescription>
+                Filter and view plans for {selectedAccount}
+              </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button variant="default" size="sm">
-                Search
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              {showFilters ? "Hide" : "Show"} Filters
+            </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          {/* First Row of Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <div>
-              <Select
-                value={filters.listView}
-                onValueChange={(value) => handleFilterChange("listView", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="List View (4)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Plans</SelectItem>
-                  <SelectItem value="active">Active Plans</SelectItem>
-                  <SelectItem value="pending">Pending Plans</SelectItem>
-                  <SelectItem value="expired">Expired Plans</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            <div>
-              <Select
-                value={filters.linesOfCoverage}
-                onValueChange={(value) =>
-                  handleFilterChange("linesOfCoverage", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Lines of Coverage (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="medical">Medical</SelectItem>
-                  <SelectItem value="dental">Dental</SelectItem>
-                  <SelectItem value="vision">Vision</SelectItem>
-                  <SelectItem value="life">Life Insurance</SelectItem>
-                  <SelectItem value="disability">Disability</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {showFilters && (
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Lines of Coverage ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.linesOfCoverage}
+                  onValueChange={(value) =>
+                    handleFilterChange("linesOfCoverage", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LINES_OF_COVERAGE.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Select
-                value={filters.planTypes}
-                onValueChange={(value) =>
-                  handleFilterChange("planTypes", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Plan Types (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="HMO">HMO</SelectItem>
-                  <SelectItem value="PPO">PPO</SelectItem>
-                  <SelectItem value="EPO">EPO</SelectItem>
-                  <SelectItem value="POS">POS</SelectItem>
-                  <SelectItem value="HDHP">
-                    High Deductible Health Plan
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Plan Types ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.planTypes}
+                  onValueChange={(value) =>
+                    handleFilterChange("planTypes", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PLAN_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Select
-                value={filters.fundingType}
-                onValueChange={(value) =>
-                  handleFilterChange("fundingType", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Funding Type (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="fully-insured">Fully Insured</SelectItem>
-                  <SelectItem value="self-funded">Self Funded</SelectItem>
-                  <SelectItem value="level-funded">Level Funded</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Funding Type ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.fundingTypes}
+                  onValueChange={(value) =>
+                    handleFilterChange("fundingTypes", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FUNDING_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {/* Second Row of Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Select
-                value={filters.locations}
-                onValueChange={(value) =>
-                  handleFilterChange("locations", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Locations (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all-locations">All Locations</SelectItem>
-                  <SelectItem value="headquarters">Headquarters</SelectItem>
-                  <SelectItem value="branch-offices">Branch Offices</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Employee Types ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.employeeTypes}
+                  onValueChange={(value) =>
+                    handleFilterChange("employeeTypes", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EMPLOYEE_TYPES.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Select
-                value={filters.employeeTypes}
-                onValueChange={(value) =>
-                  handleFilterChange("employeeTypes", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Employee Types (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="full-time">Full Time</SelectItem>
-                  <SelectItem value="part-time">Part Time</SelectItem>
-                  <SelectItem value="seasonal">Seasonal</SelectItem>
-                  <SelectItem value="contractor">Contractor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Locations ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.locations}
+                  onValueChange={(value) =>
+                    handleFilterChange("locations", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCATIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Select
-                value={filters.secondaryPlanType}
-                onValueChange={(value) =>
-                  handleFilterChange("secondaryPlanType", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Secondary Plan Type (0)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supplemental">Supplemental</SelectItem>
-                  <SelectItem value="voluntary">Voluntary</SelectItem>
-                  <SelectItem value="cobra">COBRA</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Secondary Plan Type ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.secondaryPlanType}
+                  onValueChange={(value) =>
+                    handleFilterChange("secondaryPlanType", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    <SelectItem value="None">None</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Select
-                value={filters.nonBrokered}
-                onValueChange={(value) =>
-                  handleFilterChange("nonBrokered", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Non-Brokered (2)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1 block">
+                  Non-Brokered ({filteredPlans.length})
+                </label>
+                <Select
+                  value={filters.nonBrokered}
+                  onValueChange={(value) =>
+                    handleFilterChange("nonBrokered", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All</SelectItem>
+                    <SelectItem value="Yes">Yes</SelectItem>
+                    <SelectItem value="No">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button className="w-full">
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+              </div>
             </div>
-          </div>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Plans Tab Content */}
@@ -282,7 +317,7 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
         <CardHeader>
           <CardTitle>Account Plans</CardTitle>
           <CardDescription>
-            Detailed view of all plans for {selectedAccount}
+            {filteredPlans.length} plan(s) found for {selectedAccount}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -293,7 +328,7 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                   <TableHead>Plan Type</TableHead>
                   <TableHead>Carrier</TableHead>
                   <TableHead>Plan Name</TableHead>
-                  <TableHead>Enrollment</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Effective Date</TableHead>
                   <TableHead>Renewal Date</TableHead>
                   <TableHead>Annual Premium</TableHead>
@@ -307,7 +342,8 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                     <TableRow key={plan.plan_id}>
                       <TableCell>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {plan.plan_type}
+                          {plan.plan_type_info?.plan_type_name ||
+                            plan.plan_type}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -322,35 +358,20 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                           )}&planId=${plan.plan_id}`}
                           className="text-blue-600 hover:underline"
                         >
-                          {plan.plan}
+                          {plan.plan_type_info?.plan_type_name ||
+                            plan.plan_type}{" "}
+                          - {plan.carrier}
                         </Link>
                       </TableCell>
-                      <TableCell>
-                        {(plan.enrollment || 0).toLocaleString()}
-                      </TableCell>
+                      <TableCell>{plan.status || "Active"}</TableCell>
                       <TableCell>
                         {new Date(plan.effective_date).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         {new Date(plan.renewal_date).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
-                        $
-                        {(
-                          (plan.annual_employee_cost || 0) +
-                          (plan.annual_employer_cost || 0)
-                        ).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        $
-                        {(plan.annual_revenue || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </TableCell>
+                      <TableCell>N/A</TableCell>
+                      <TableCell>N/A</TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

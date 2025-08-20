@@ -15,17 +15,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { planService, planTypeService } from "@/lib/database";
+import { PlanWithAccount } from "@/lib/supabase";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-import { mockPlans, planTypes } from "../_data/mock";
 
 export default function ReplacePlanPage() {
   const search = useSearchParams();
   const account = search?.get("account") || "(unknown)";
   const planId = Number(search?.get("planId")) || null;
-  const plan = mockPlans.find((p: any) => p.id === planId);
+  const [plan, setPlan] = React.useState<PlanWithAccount | null>(null);
   const [replacementPlanType, setReplacementPlanType] = React.useState("");
+  const [planTypes, setPlanTypes] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch plan types
+        const types = await planTypeService.getAll();
+        setPlanTypes(types);
+
+        // Fetch plan details if planId is provided
+        if (planId) {
+          const planData = await planService.getById(planId);
+          setPlan(planData);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [planId]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,7 +59,9 @@ export default function ReplacePlanPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
-                href={`/account-plans?account=${encodeURIComponent(account)}`}
+                href={`/account-dashboard?account=${encodeURIComponent(
+                  account
+                )}`}
               >
                 <Button variant="ghost" size="sm">
                   Back to Plans
@@ -58,7 +85,8 @@ export default function ReplacePlanPage() {
                   Current Plan Being Replaced
                 </h3>
                 <p className="text-blue-700 mt-1">
-                  {plan?.name} - {plan?.carrier}
+                  {plan?.plan_type_info?.plan_type_name || plan?.plan_type} -{" "}
+                  {plan?.carrier}
                 </p>
               </div>
               <div className="text-right">
@@ -74,7 +102,7 @@ export default function ReplacePlanPage() {
             <CardTitle>Select New Plan Type</CardTitle>
             <CardDescription>
               Choose the type of plan you want to replace the current{" "}
-              {plan?.name} with
+              {plan?.plan_type_info?.plan_type_name || plan?.plan_type} with
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -83,9 +111,14 @@ export default function ReplacePlanPage() {
               <Select
                 value={replacementPlanType}
                 onValueChange={(v) => setReplacementPlanType(v)}
+                disabled={loading}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a plan type" />
+                  <SelectValue
+                    placeholder={
+                      loading ? "Loading plan types..." : "Select a plan type"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {planTypes.map((type: string) => (
@@ -101,11 +134,11 @@ export default function ReplacePlanPage() {
               <Link
                 href={`/plan-config?account=${encodeURIComponent(
                   account
-                )}&replaceId=${plan?.id}&replaceType=${encodeURIComponent(
-                  replacementPlanType
-                )}`}
+                )}&replaceId=${
+                  plan?.plan_type
+                }&replaceType=${encodeURIComponent(replacementPlanType)}`}
               >
-                <Button disabled={!replacementPlanType}>
+                <Button disabled={!replacementPlanType || loading}>
                   Continue to Configuration
                 </Button>
               </Link>

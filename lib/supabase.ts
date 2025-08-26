@@ -32,7 +32,6 @@ export interface Plan {
   plan_id: number;
   account_id: number;
   carrier: string;
-  plan_type: string;
   plan_type_id?: number;
   commission_paid_by_carrier?: string;
   billing?: string;

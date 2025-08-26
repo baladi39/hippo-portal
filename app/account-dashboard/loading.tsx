@@ -17,8 +17,8 @@ export default function AccountDashboardLoading() {
       {/* Main Content - Skeleton structure */}
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
-          <Skeleton className="h-8 w-96 mb-2" />
-          <Skeleton className="h-5 w-128" />
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
         </div>
 
         {/* Tabs Skeleton */}

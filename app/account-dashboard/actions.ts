@@ -63,6 +63,29 @@ export const fetchPlansByAccountName = async (accountName: string) => {
 };
 
 /**
+ * Fetch dashboard data for an account by ID
+ */
+export const fetchAccountDashboardDataById = async (
+  accountId: number
+): Promise<AccountDashboardData> => {
+  try {
+    // First get the account details to get the account name
+    const account = await fetchAccountById(accountId);
+
+    // Then fetch dashboard data using the account name
+    return await fetchAccountDashboardData(account.accountName);
+  } catch (error) {
+    console.error(
+      `Error fetching dashboard data for account ID ${accountId}:`,
+      error
+    );
+    throw error instanceof Error
+      ? error
+      : new Error("Failed to fetch dashboard data");
+  }
+};
+
+/**
  * Fetch dashboard data for an account (or all accounts if no account specified)
  */
 export const fetchAccountDashboardData = async (

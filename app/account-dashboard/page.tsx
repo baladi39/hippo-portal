@@ -1,39 +1,64 @@
 "use client";
 
 import { DashboardTab, PlansTab } from "@/components/account-dashboard";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   PageHeader,
   createAccountDashboardActions,
 } from "@/components/ui/page-header";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlanWithAccount } from "@/lib/supabase";
-import { PlanDto } from "@/server/models/account-model";
+import { AccountDto } from "@/server/models/account-model";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { AccountDashboardData, fetchAccountDashboardData } from "./actions";
+import { fetchAccountById } from "./actions";
 
 export default function AccountDashboardPage() {
-  const [plans, setPlans] = useState<PlanWithAccount[]>([]);
-  const [accountPlans, setAccountPlans] = useState<PlanWithAccount[]>([]);
-  const [dashboardData, setDashboardData] =
-    useState<AccountDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>("");
   const searchParams = useSearchParams();
   const router = useRouter();
-  const selectedAccount = searchParams.get("account");
+
+  // Read accountId from URL parameters
+  const accountIdParam = searchParams.get("accountId");
+  const accountId = accountIdParam ? parseInt(accountIdParam) : null;
   const currentTab = searchParams.get("tab") || "dashboard";
 
+  // State for account data
+  const [account, setAccount] = useState<AccountDto | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch account data when accountId changes
   useEffect(() => {
-    loadDashboardData();
-  }, [selectedAccount]);
+    const loadAccount = async () => {
+      if (!accountId) {
+        setAccount(null);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const accountData = await fetchAccountById(accountId);
+        setAccount(accountData);
+      } catch (err) {
+        console.error("Error loading account:", err);
+        setError(err instanceof Error ? err.message : "Failed to load account");
+        setAccount(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAccount();
+  }, [accountId]);
 
   const handleTabChange = (newTab: string) => {
     const params = new URLSearchParams();
 
-    // Preserve existing account parameter
-    if (selectedAccount) {
-      params.set("account", selectedAccount);
+    // Preserve existing accountId parameter
+    if (accountId) {
+      params.set("accountId", accountId.toString());
     }
 
     // Add the new tab parameter
@@ -43,104 +68,71 @@ export default function AccountDashboardPage() {
     router.push(`/account-dashboard?${params.toString()}`, { scroll: false });
   };
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchAccountDashboardData(
-        selectedAccount || undefined
-      );
-      setDashboardData(data);
+  // Show loading state while fetching account data
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PageHeader
+          title="Hippo Portal - Account Dashboard"
+          actions={createAccountDashboardActions(undefined)}
+        />
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="mb-8">
+            <Skeleton className="h-8 w-64 mb-2" />
+            <Skeleton className="h-5 w-96" />
+          </div>
+          <Card>
+            <CardContent className="p-8">
+              <Skeleton className="h-32 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
-      // Convert PlanDto to PlanWithAccount format for existing components
-      const convertedPlans = convertPlansForComponents(data.plans);
-      setPlans(convertedPlans);
-      setAccountPlans(convertedPlans);
-
-      setError(""); // Clear any previous errors
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load dashboard data"
-      );
-      setPlans([]);
-      setAccountPlans([]);
-      setDashboardData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Convert PlanDto[] to PlanWithAccount format expected by existing components
-  const convertPlansForComponents = (
-    planDtos: PlanDto[]
-  ): PlanWithAccount[] => {
-    return planDtos.map((plan) => ({
-      plan_id: plan.planId,
-      annual_employee_cost: 0, // Default value - could be fetched separately if needed
-      annual_revenue: 0, // Default value - could be fetched separately if needed
-      annual_commission: 0, // Default value - could be fetched separately if needed
-      enrollment: 0, // Default value - could be fetched separately if needed
-      account_id: plan.accountId,
-      carrier: plan.carrier,
-      plan_type: plan.planType,
-      plan_type_id: undefined,
-      commission_paid_by_carrier: undefined,
-      billing: undefined,
-      policy_group_number: plan.policyGroupNumber,
-      effective_date: plan.effectiveDate,
-      renewal_date: plan.renewalDate,
-      cancellation_date: plan.cancellationDate,
-      status: plan.status,
-      created_date: plan.createdDate,
-      updated_date: plan.updatedDate,
-      account: {
-        account_id: plan.accountId,
-        account: plan.accountName,
-        sba: 0, // Default value - could be fetched separately if needed
-        state: plan.accountOfficeDivision,
-        commission_1_basis: "",
-        commission_2_basis: "",
-        flat_fee: 0,
-        percentage: 0,
-        created_date: plan.createdDate,
-        updated_date: plan.updatedDate,
-      },
-    }));
-  };
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <PageHeader
+          title="Hippo Portal - Account Dashboard"
+          actions={createAccountDashboardActions(undefined)}
+        />
+        <div className="max-w-7xl mx-auto p-6">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h3 className="text-lg font-medium text-red-900 mb-2">
+                Error Loading Account
+              </h3>
+              <p className="text-red-600 mb-4">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <PageHeader
         title="Hippo Portal - Account Dashboard"
-        actions={createAccountDashboardActions(selectedAccount || undefined)}
+        actions={createAccountDashboardActions(account?.accountName)}
       />
 
       <div className="max-w-7xl mx-auto p-6">
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-2">
-            {selectedAccount || "Account Dashboard"}
+            {account?.accountName || "Account Dashboard"}
           </h2>
           <p className="text-gray-600">
-            {selectedAccount
-              ? `Detailed overview of ${selectedAccount}'s hippo portfolio`
+            {account
+              ? `Detailed overview of ${account.accountName}'s hippo portfolio`
               : "Please select an account to view details"}
           </p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-8">Loading account dashboard...</div>
-        ) : error ? (
-          <div className="text-center py-8 text-red-600">
-            <p className="font-medium">Error loading account dashboard</p>
-            <p className="text-sm mt-1">{error}</p>
-            <button
-              onClick={loadDashboardData}
-              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
+        {
           <Tabs
             value={currentTab}
             onValueChange={handleTabChange}
@@ -153,19 +145,19 @@ export default function AccountDashboardPage() {
 
             <TabsContent value="dashboard">
               <DashboardTab
-                selectedAccount={selectedAccount}
-                accountPlans={accountPlans}
+                selectedAccount={account?.accountName || null}
+                accountId={accountId}
               />
             </TabsContent>
 
             <TabsContent value="plans">
               <PlansTab
-                selectedAccount={selectedAccount}
-                accountPlans={accountPlans}
+                selectedAccount={account?.accountName || null}
+                accountId={accountId}
               />
             </TabsContent>
           </Tabs>
-        )}
+        }
       </div>
     </div>
   );

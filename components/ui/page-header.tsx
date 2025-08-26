@@ -85,9 +85,10 @@ export function PageHeader({
 // Common header action presets for quick usage
 export const createBackAction = (
   href: string,
-  label: string = "Back"
+  label: string = "Back",
+  position?: number
 ): HeaderAction => ({
-  id: "back",
+  id: position !== undefined ? `back-${position}` : "back",
   label,
   href,
   variant: "ghost",
@@ -96,9 +97,10 @@ export const createBackAction = (
 
 export const createSignOutAction = (
   href: string = "/login",
-  label: string = "Sign Out"
+  label: string = "Sign Out",
+  position?: number
 ): HeaderAction => ({
-  id: "signout",
+  id: position !== undefined ? `signout-${position}` : "signout",
   label,
   href,
   variant: "ghost",
@@ -107,9 +109,10 @@ export const createSignOutAction = (
 export const createPrimaryAction = (
   label: string,
   href?: string,
-  onClick?: () => void
+  onClick?: () => void,
+  position?: number
 ): HeaderAction => ({
-  id: "primary",
+  id: position !== undefined ? `primary-${position}` : "primary",
   label,
   href,
   onClick,
@@ -119,25 +122,72 @@ export const createPrimaryAction = (
 export const createOutlineAction = (
   label: string,
   href?: string,
-  onClick?: () => void
+  onClick?: () => void,
+  position?: number
 ): HeaderAction => ({
-  id: "outline",
+  id: position !== undefined ? `outline-${position}` : "outline",
   label,
   href,
   onClick,
   variant: "outline",
 });
 
+// Utility function to create actions with automatic positioning
+export const createActionsWithPositioning = (
+  actionCreators: (() => Omit<HeaderAction, "id">)[]
+): HeaderAction[] => {
+  return actionCreators.map((creator, index) => {
+    const action = creator();
+    return {
+      ...action,
+      id: `action-${index}`,
+    };
+  });
+};
+
+// Alternative utility that accepts action configs and assigns positions
+export const createDynamicActions = (
+  actions: Array<{
+    type: "back" | "signout" | "primary" | "outline" | "custom";
+    label: string;
+    href?: string;
+    onClick?: () => void;
+    variant?: HeaderAction["variant"];
+    size?: HeaderAction["size"];
+    className?: string;
+    disabled?: boolean;
+  }>
+): HeaderAction[] => {
+  return actions.map((action, index) => ({
+    id: `${action.type}-${index}`,
+    label: action.label,
+    href: action.href,
+    onClick: action.onClick,
+    variant:
+      action.variant ||
+      (action.type === "back"
+        ? "ghost"
+        : action.type === "signout"
+        ? "ghost"
+        : action.type === "primary"
+        ? "default"
+        : "outline"),
+    size: action.size || (action.type === "back" ? "sm" : "default"),
+    className: action.className,
+    disabled: action.disabled,
+  }));
+};
+
 // Preset configurations for common page types
 export const createAccountsPageActions = (): HeaderAction[] => [
-  createSignOutAction(),
+  createSignOutAction("/login", "Sign Out", 0),
 ];
 
 export const createAccountDashboardActions = (
   accountName?: string
 ): HeaderAction[] => [
-  createBackAction("/accounts", "Back to Accounts"),
-  createSignOutAction(),
+  createBackAction("/accounts", "Back to Accounts", 0),
+  createSignOutAction("/login", "Sign Out", 1),
 ];
 
 export const createPlanConfigActions = (
@@ -150,7 +200,8 @@ export const createPlanConfigActions = (
           account
         )}&planId=${replaceId}`
       : `/add-plan?account=${encodeURIComponent(account)}`,
-    "Back to Plan Selection"
+    "Back to Plan Selection",
+    0
   ),
-  createSignOutAction(),
+  createSignOutAction("/login", "Sign Out", 1),
 ];

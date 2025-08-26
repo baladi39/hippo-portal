@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  fetchAccountDashboardData,
+  fetchAccountDashboardDataById,
+} from "@/app/account-dashboard/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -29,10 +34,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlanWithAccount } from "@/lib/supabase";
+import { PlanDto } from "@/server/models/account-model";
 import { Filter, MoreHorizontal, Search } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Filter constants
 const LINES_OF_COVERAGE = [
@@ -67,10 +72,26 @@ interface PlanFilters {
 
 interface PlansTabProps {
   selectedAccount: string | null;
-  accountPlans: PlanWithAccount[];
+  accountId?: number | null;
 }
 
-export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
+interface AccountDashboardData {
+  plans: PlanDto[];
+  accountPlans: PlanDto[];
+  summary: {
+    totalPlans: number;
+    activePlans: number;
+    carrierBreakdown: Record<string, number>;
+    planTypeBreakdown: Record<string, number>;
+  };
+}
+
+export function PlansTab({ selectedAccount, accountId }: PlansTabProps) {
+  const [accountData, setAccountData] = useState<AccountDashboardData | null>(
+    null
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<PlanFilters>({
     linesOfCoverage: "All",
@@ -82,12 +103,108 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
     nonBrokered: "All",
   });
 
+  useEffect(() => {
+    const loadAccountData = async () => {
+      // If neither accountId nor selectedAccount is provided, don't load data
+      if (!accountId && !selectedAccount) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        let data;
+        if (accountId) {
+          // Prefer accountId if available
+          data = await fetchAccountDashboardDataById(accountId);
+        } else if (selectedAccount) {
+          // Fall back to selectedAccount name
+          data = await fetchAccountDashboardData(selectedAccount);
+        }
+
+        setAccountData(data || null);
+      } catch (err) {
+        console.error("Error loading account data:", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load account data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAccountData();
+  }, [selectedAccount, accountId]);
+
+  const accountPlans = accountData?.accountPlans || [];
+
+  // Show message when no account is selected
+  if (!accountId && !selectedAccount) {
+    return (
+      <div className="mt-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No Account Selected
+            </h3>
+            <p className="text-gray-600">
+              Please select an account from the accounts page to view plans.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="mt-6 space-y-6">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex space-x-4">
+                  <Skeleton className="h-12 flex-1" />
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 w-24" />
+                  <Skeleton className="h-12 w-12" />
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="mt-6">
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-medium text-red-900 mb-2">
+              Error Loading Plans Data
+            </h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button onClick={() => window.location.reload()}>Try Again</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Filter the plans based on selected filters
-  const filteredPlans = accountPlans.filter((plan) => {
-    if (
-      filters.planTypes !== "All" &&
-      plan.plan_type_info?.plan_type_name !== filters.planTypes
-    )
+  const filteredPlans = accountPlans.filter((plan: PlanDto) => {
+    if (filters.planTypes !== "All" && plan.planType !== filters.planTypes)
       return false;
     if (
       filters.linesOfCoverage !== "All" &&
@@ -338,12 +455,11 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
               </TableHeader>
               <TableBody>
                 {filteredPlans.length > 0 ? (
-                  filteredPlans.map((plan) => (
-                    <TableRow key={plan.plan_id}>
+                  filteredPlans.map((plan: PlanDto) => (
+                    <TableRow key={plan.planId}>
                       <TableCell>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {plan.plan_type_info?.plan_type_name ||
-                            plan.plan_type}
+                          {plan.planType}
                         </span>
                       </TableCell>
                       <TableCell>
@@ -353,22 +469,18 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                       </TableCell>
                       <TableCell className="font-medium">
                         <Link
-                          href={`/plan-config?account=${encodeURIComponent(
-                            plan.account.account
-                          )}&planId=${plan.plan_id}`}
+                          href={"#"}
                           className="text-blue-600 hover:underline"
                         >
-                          {plan.plan_type_info?.plan_type_name ||
-                            plan.plan_type}{" "}
-                          - {plan.carrier}
+                          {plan.planType} - {plan.carrier}
                         </Link>
                       </TableCell>
                       <TableCell>{plan.status || "Active"}</TableCell>
                       <TableCell>
-                        {new Date(plan.effective_date).toLocaleDateString()}
+                        {new Date(plan.effectiveDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        {new Date(plan.renewal_date).toLocaleDateString()}
+                        {new Date(plan.renewalDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell>N/A</TableCell>
                       <TableCell>N/A</TableCell>
@@ -384,8 +496,8 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                             <DropdownMenuItem>
                               <Link
                                 href={`/plan-config?account=${encodeURIComponent(
-                                  plan.account.account
-                                )}&planId=${plan.plan_id}`}
+                                  plan.accountName
+                                )}&planId=${plan.planId}`}
                                 className="w-full"
                               >
                                 Plan Info
@@ -406,9 +518,7 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                             <DropdownMenuItem>Renew</DropdownMenuItem>
                             <DropdownMenuItem>
                               <Link
-                                href={`/replace-plan?account=${encodeURIComponent(
-                                  plan.account.account
-                                )}&planId=${plan.plan_id}`}
+                                href={`/replace-plan?accountid=${plan.accountId}&planId=${plan.planId}`}
                                 className="w-full"
                               >
                                 Replace

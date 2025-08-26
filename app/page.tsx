@@ -10,21 +10,9 @@ export default function HomePage() {
           Navigate to the different sections of the Hippo portal
         </p>
         <div className="space-y-2">
-          <div className="space-x-4">
-            <Link href="/login">
-              <Button>Login</Button>
-            </Link>
-            <Link href="/accounts">
-              <Button variant="outline">Accounts</Button>
-            </Link>
-          </div>
-          <div>
-            <Link href="/page-header-demo">
-              <Button variant="ghost" size="sm">
-                View PageHeader Component Demo
-              </Button>
-            </Link>
-          </div>
+          <Link href="/login">
+            <Button>Login</Button>
+          </Link>
         </div>
       </div>
     </div>

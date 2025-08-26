@@ -5,6 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  PageHeader,
+  createPlanConfigActions,
+} from "@/components/ui/page-header";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,33 +54,10 @@ export default function PlanConfigPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href={
-                  replaceId
-                    ? `/replace-plan?account=${encodeURIComponent(
-                        account
-                      )}&planId=${replaceId}`
-                    : `/add-plan?account=${encodeURIComponent(account)}`
-                }
-              >
-                <Button variant="ghost" size="sm">
-                  Back to Plan Selection
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Plan Configuration
-              </h1>
-            </div>
-            <Link href="/login">
-              <Button variant="outline">Sign Out</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        title="Plan Configuration"
+        actions={createPlanConfigActions(account, replaceId)}
+      />
 
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         <Card>

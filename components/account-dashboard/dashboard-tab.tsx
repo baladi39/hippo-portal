@@ -27,9 +27,7 @@ export function DashboardTab({
   // Calculate revenue metrics using the new schema
   const calculatePremiumYTD = () => {
     return accountPlans.reduce(
-      (sum, plan) =>
-        sum +
-        ((plan.annual_employee_cost || 0) + (plan.annual_employer_cost || 0)),
+      (sum, plan) => sum + (plan.annual_employee_cost || 0),
       0
     );
   };

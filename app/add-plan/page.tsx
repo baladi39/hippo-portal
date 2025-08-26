@@ -9,6 +9,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  PageHeader,
+  createBackAction,
+  createSignOutAction,
+} from "@/components/ui/page-header";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -35,27 +40,17 @@ export default function AddPlanPage() {
   const account = search?.get("account") || "(unknown)";
   const [newPlanType, setNewPlanType] = React.useState("");
 
+  const headerActions = [
+    createBackAction(
+      `/account-plans?account=${encodeURIComponent(account)}`,
+      "Back to Plans"
+    ),
+    createSignOutAction(),
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/account-plans?account=${encodeURIComponent(account)}`}
-              >
-                <Button variant="ghost" size="sm">
-                  Back to Plans
-                </Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900">Add New Plan</h1>
-            </div>
-            <Link href="/login">
-              <Button variant="outline">Sign Out</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Add New Plan" actions={headerActions} />
 
       <div className="max-w-4xl mx-auto p-6">
         <Card>

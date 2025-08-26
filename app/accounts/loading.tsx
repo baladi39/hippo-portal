@@ -1,24 +1,14 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  PageHeader,
+  createAccountsPageActions,
+} from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
 
 export default function AccountsLoading() {
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Hippo Portal</h1>
-            <div className="flex gap-2">
-              <Link href="/login">
-                <Button variant="ghost">Sign Out</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="Hippo Portal" actions={createAccountsPageActions()} />
 
       <div className="max-w-7xl mx-auto p-6">
         {/* Page Title */}

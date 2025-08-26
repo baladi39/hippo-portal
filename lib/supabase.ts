@@ -47,6 +47,10 @@ export interface Plan {
 
 // Extended type for joined data (used in views)
 export interface PlanWithAccount extends Plan {
+  annual_employee_cost: number;
+  annual_revenue: number;
+  annual_commission: number;
+  enrollment: number;
   account: Account;
   plan_type_info?: PlanType;
 }

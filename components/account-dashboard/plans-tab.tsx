@@ -444,11 +444,7 @@ export function PlansTab({ selectedAccount, accountPlans }: PlansTabProps) {
                 </span>
               )}
             </div>
-            <Link
-              href={`/add-plan?account=${encodeURIComponent(
-                selectedAccount || ""
-              )}`}
-            >
+            <Link href="#">
               <Button>Add New Plan</Button>
             </Link>
           </div>

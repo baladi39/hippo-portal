@@ -196,7 +196,7 @@ export function DashboardTab({
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Department:</span>
-              <span className="font-medium">Employee Benefits</span>
+              <span className="font-medium">Employee Hippo</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Administrator:</span>

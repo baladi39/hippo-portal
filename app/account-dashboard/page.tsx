@@ -54,7 +54,7 @@ export default function AccountDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">
-              BenefitPoint Portal - Account Dashboard
+              Hippo Portal - Account Dashboard
             </h1>
             <div className="flex gap-2">
               <Link href="/accounts">
@@ -75,7 +75,7 @@ export default function AccountDashboardPage() {
           </h2>
           <p className="text-gray-600">
             {selectedAccount
-              ? `Detailed overview of ${selectedAccount}'s benefits portfolio`
+              ? `Detailed overview of ${selectedAccount}'s hippo portfolio`
               : "Please select an account to view details"}
           </p>
         </div>

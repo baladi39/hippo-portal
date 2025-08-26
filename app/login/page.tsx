@@ -24,9 +24,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">
-            BenefitPoint Portal
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Hippo Portal</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent>
@@ -36,7 +34,7 @@ export default function LoginPage() {
               <Input
                 id="email"
                 type="email"
-                defaultValue="carrierconnect-internal@threeflow.com"
+                defaultValue="carrierconnect-internal@stichstudio.ai"
                 required
               />
             </div>

@@ -24,32 +24,52 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { planService } from "@/lib/database";
-import { PlanWithAccount } from "@/lib/supabase";
 import { MoreHorizontal, Search } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
+import {
+  fetchPlansWithAccounts,
+  getAccountsWithPlansData,
+  getSummaryData,
+  searchPlansWithAccounts,
+  type DashboardSummary,
+  type PlanDto,
+} from "./actions";
 
 export default function AccountsPage() {
-  const [plans, setPlans] = useState<PlanWithAccount[]>([]);
+  const [plans, setPlans] = useState<PlanDto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+  const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
+  const [accountsData, setAccountsData] = useState<any[]>([]);
 
   useEffect(() => {
+    setMounted(true);
     loadPlans();
   }, []);
 
   const loadPlans = async () => {
     setLoading(true);
     try {
-      const data = await planService.getAll();
-      setPlans(data);
+      const [plansResponse, summaryResponse, accountsResponse] =
+        await Promise.all([
+          fetchPlansWithAccounts(),
+          getSummaryData(),
+          getAccountsWithPlansData(),
+        ]);
+
+      setPlans(plansResponse.plans);
+      setSummaryData(summaryResponse);
+      setAccountsData(accountsResponse);
       setError(""); // Clear any previous errors
     } catch (error) {
       console.error("Failed to load plans:", error);
       setError(error instanceof Error ? error.message : "Failed to load plans");
       setPlans([]); // Set empty array on error
+      setSummaryData(null);
+      setAccountsData([]);
     } finally {
       setLoading(false);
     }
@@ -64,140 +84,80 @@ export default function AccountsPage() {
 
     setLoading(true);
     try {
-      // Search plans by account name, plan name, or carrier
-      const allPlans = await planService.getAll();
-      const filteredPlans = allPlans.filter(
-        (plan) =>
-          plan.account.account
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-          plan.plan.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plan.carrier.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plan.plan_type.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setPlans(filteredPlans);
+      const searchResponse = await searchPlansWithAccounts(searchTerm);
+      setPlans(searchResponse.plans);
+
+      // Update accounts data based on search results
+      const filteredAccountsData = searchResponse.plans.map((plan) => ({
+        accountId: plan.accountId,
+        accountName: plan.accountName,
+        accountOfficeDivision: plan.accountOfficeDivision,
+        accountPrimarySalesLead: plan.accountPrimarySalesLead || "TBD",
+        accountClassification: plan.accountClassification || "TBD",
+        carrier: plan.carrier,
+        planType: plan.planType,
+        planName: plan.planName,
+        policyGroupNumber: plan.policyGroupNumber || "TBD",
+        effectiveDate: new Date(plan.effectiveDate).toLocaleDateString(),
+        renewalDate: new Date(plan.renewalDate).toLocaleDateString(),
+        enrollment: plan.enrollment || "TBD",
+        annualRevenue: plan.annualRevenue || "TBD",
+        planId: plan.planId,
+      }));
+
+      setAccountsData(filteredAccountsData);
       setError("");
     } catch (error) {
       console.error("Failed to search:", error);
       setError(error instanceof Error ? error.message : "Failed to search");
       setPlans([]);
+      setAccountsData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Get accounts with plans data for the new table structure
-  const getAccountsWithPlansData = () => {
-    return plans.map((planRecord) => ({
-      accountId: planRecord.account.account_id,
-      accountName: planRecord.account.account,
-      accountOfficeDivision: planRecord.account.state, // Using state as office-division for now
-      accountPrimarySalesLead: "TBD", // This field needs to be added to the Account table
-      accountClassification: "TBD", // This field needs to be added to the Account table
-      carrier: planRecord.carrier,
-      planType: planRecord.plan_type,
-      planName: planRecord.plan,
-      policyGroupNumber: "TBD", // This field needs to be added to the Plan table
-      effectiveDate: new Date(planRecord.effective_date).toLocaleDateString(),
-      renewalDate: new Date(planRecord.renewal_date).toLocaleDateString(),
-      enrollment: planRecord.enrollment,
-      annualRevenue: planRecord.annual_revenue,
-      planId: planRecord.plan_id,
-    }));
-  };
+  // Prevent hydration mismatch by not rendering dynamic content until mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white border-b">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Hippo Portal</h1>
+              <div className="flex gap-2">
+                <Link href="/login">
+                  <Button variant="ghost">Sign Out</Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  // Calculate summary statistics
-  const getSummaryData = () => {
-    const today = new Date();
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
-    const ninetyDaysFromNow = new Date();
-    ninetyDaysFromNow.setDate(today.getDate() + 90);
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-2">Accounts</h2>
+            <p className="text-gray-600">
+              Manage your client accounts and their benefit plans
+            </p>
+          </div>
 
-    const summaryStats = {
-      plans: {
-        upForRenewal: 0,
-        expiredNoAction: 0,
-        newBusiness: 0,
-      },
-      products: {
-        upForRenewal: 0,
-        expiredNoAction: 0,
-        newBusiness: 0,
-      },
-      recordAssignments: {
-        dueToday: 0,
-        pastDue: 0,
-        upcoming: 0,
-      },
-      activities: {
-        dueToday: 0,
-        pastDue: 0,
-        upcoming: 0,
-      },
-      requests: {
-        dueToday: 0,
-        pastDue: 0,
-        responses: 0,
-      },
-    };
-
-    plans.forEach((plan) => {
-      const renewalDate = new Date(plan.renewal_date);
-      const effectiveDate = new Date(plan.effective_date);
-
-      // Plans summary
-      if (renewalDate <= thirtyDaysFromNow && renewalDate >= today) {
-        summaryStats.plans.upForRenewal++;
-      } else if (renewalDate < today) {
-        summaryStats.plans.expiredNoAction++;
-      } else if (effectiveDate >= today) {
-        summaryStats.plans.newBusiness++;
-      }
-
-      // Products summary (same logic for now)
-      if (renewalDate <= thirtyDaysFromNow && renewalDate >= today) {
-        summaryStats.products.upForRenewal++;
-      } else if (renewalDate < today) {
-        summaryStats.products.expiredNoAction++;
-      } else if (effectiveDate >= today) {
-        summaryStats.products.newBusiness++;
-      }
-    });
-
-    // Note: Record Assignments, Activities, and Requests would need additional data sources
-    // For now, using placeholder calculations
-    summaryStats.recordAssignments.dueToday = Math.floor(plans.length * 0.1);
-    summaryStats.recordAssignments.pastDue = Math.floor(plans.length * 0.05);
-    summaryStats.recordAssignments.upcoming = Math.floor(plans.length * 0.2);
-
-    summaryStats.activities.dueToday = Math.floor(plans.length * 0.08);
-    summaryStats.activities.pastDue = Math.floor(plans.length * 0.03);
-    summaryStats.activities.upcoming = Math.floor(plans.length * 0.15);
-
-    summaryStats.requests.dueToday = Math.floor(plans.length * 0.05);
-    summaryStats.requests.pastDue = Math.floor(plans.length * 0.02);
-    summaryStats.requests.responses = Math.floor(plans.length * 0.1);
-
-    return summaryStats;
-  };
-
-  const accountsData = getAccountsWithPlansData();
-  const summaryData = getSummaryData();
-  const totalPlans = plans.length;
-  const totalRevenue = plans.reduce(
-    (sum, plan) => sum + plan.annual_revenue,
-    0
-  );
+          <Card className="mb-6">
+            <CardContent className="p-6">
+              <div className="text-center py-8">Loading...</div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              BenefitPoint Portal
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Hippo Portal</h1>
             <div className="flex gap-2">
               <Link href="/login">
                 <Button variant="ghost">Sign Out</Button>
@@ -245,7 +205,7 @@ export default function AccountsPage() {
         </Card>
 
         {/* Summary Cards */}
-        {!loading && !error && (
+        {!loading && !error && summaryData && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             {/* Plans Summary */}
             <Card>
@@ -517,7 +477,7 @@ export default function AccountsPage() {
                                   Plan Info
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem>Benefits</DropdownMenuItem>
+                              <DropdownMenuItem>Hippo</DropdownMenuItem>
                               <DropdownMenuItem>Rates</DropdownMenuItem>
                               <DropdownMenuItem>Splits</DropdownMenuItem>
                               <DropdownMenuItem>

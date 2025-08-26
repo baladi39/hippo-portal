@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Hippo Portal",
   description: "Hippo Portal - Account Management System",
-  generator: "v0.app",
+  generator: "hippo-portal.app",
 };
 
 export default function RootLayout({

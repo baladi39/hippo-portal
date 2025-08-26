@@ -28,11 +28,21 @@ export interface PlanType {
   updated_date?: string;
 }
 
+export interface Carrier {
+  carrier_id: number;
+  company_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface Plan {
   plan_id: number;
   account_id: number;
   carrier: string;
+  plan_type: string;
   plan_type_id?: number;
+  carrier_id?: number;
   commission_paid_by_carrier?: string;
   billing?: string;
   policy_group_number?: string;
@@ -52,6 +62,7 @@ export interface PlanWithAccount extends Plan {
   enrollment: number;
   account: Account;
   plan_type_info?: PlanType;
+  carrier_info?: Carrier;
 }
 
 export interface PlanConfig {

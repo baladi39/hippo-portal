@@ -294,11 +294,43 @@ export default function ReplacePlanForm({
               <Button variant="outline">Cancel</Button>
             </Link>
             <Link
-              href={`/plan-config?accountId=${accountId}&account=${encodeURIComponent(
-                account
-              )}&replaceId=${plan?.planId}&replaceType=${encodeURIComponent(
-                replacementPlanType
-              )}&replaceTypeId=${replacementPlanTypeId}&nonBrokered=${nonBrokered}&includeSplits=${includeSplits}&includeContributions=${includeContributions}&includeEligibilityRules=${includeEligibilityRules}`}
+              href={`/plan-config?${new URLSearchParams({
+                accountId: accountId.toString(),
+                account: account,
+                replaceId: plan?.planId?.toString() || "",
+                replaceType: replacementPlanType,
+                replaceTypeId: replacementPlanTypeId?.toString() || "",
+                nonBrokered: nonBrokered.toString(),
+                includeSplits: includeSplits,
+                includeContributions: includeContributions,
+                includeEligibilityRules: includeEligibilityRules,
+                // Original plan information for caching
+                ...(plan && {
+                  originalPlanId: plan.planId?.toString() || "",
+                  originalPlanName: plan.planName || "",
+                  originalCarrier: plan.carrier || "",
+                  originalPlanType: plan.planType || "",
+                  originalStatus: plan.status || "",
+                  originalEffectiveDate: plan.effectiveDate || "",
+                  originalRenewalDate: plan.renewalDate || "",
+                  originalCancellationDate: plan.cancellationDate || "",
+                  originalCommissionPaidByCarrier:
+                    plan.commissionPaidByCarrier || "",
+                  originalPolicyGroupNumber: plan.policyGroupNumber || "",
+                  originalBilling: plan.billing || "",
+                  originalAccountName: plan.accountName || "",
+                  originalAccountOfficeDivision:
+                    plan.accountOfficeDivision || "",
+                  originalAccountPrimarySalesLead:
+                    plan.accountPrimarySalesLead || "",
+                  originalAccountClassification:
+                    plan.accountClassification || "",
+                  originalEnrollment: plan.enrollment || "",
+                  originalAnnualRevenue: plan.annualRevenue || "",
+                  originalCreatedDate: plan.createdDate || "",
+                  originalUpdatedDate: plan.updatedDate || "",
+                }),
+              }).toString()}`}
             >
               <Button disabled={!replacementPlanTypeId}>Next</Button>
             </Link>

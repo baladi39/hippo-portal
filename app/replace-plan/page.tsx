@@ -46,7 +46,7 @@ export default async function ReplacePlanPage({
           }
           actions={[createSignOutAction()]}
         />
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-7xl mx-auto p-6">
           <Card>
             <CardContent className="p-8 text-center">
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -153,7 +153,7 @@ export default async function ReplacePlanPage({
         actions={[createSignOutAction()]}
       />
 
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6">
         <ReplacePlanForm
           plan={plan}
           planTypes={planTypes}

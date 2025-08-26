@@ -7,6 +7,7 @@ export interface PlanModel {
   carrier: string;
   plan_type: string;
   plan_type_id?: number;
+  carrier_id?: number;
   commission_paid_by_carrier?: string;
   billing?: string;
   policy_group_number?: string;
@@ -47,6 +48,7 @@ export interface PlanDto {
   accountPrimarySalesLead?: string;
   accountClassification?: string;
   carrier: string;
+  carrierId?: number;
   planType: string;
   planTypeId?: number;
   planName: string;
@@ -71,6 +73,7 @@ export interface CreatePlanData {
   carrier: string;
   plan_type: string;
   plan_type_id?: number;
+  carrier_id?: number;
   commission_paid_by_carrier?: string;
   billing?: string;
   policy_group_number?: string;

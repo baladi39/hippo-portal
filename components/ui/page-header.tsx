@@ -192,16 +192,22 @@ export const createAccountDashboardActions = (
 
 export const createPlanConfigActions = (
   account: string,
-  replaceId?: string | null
-): HeaderAction[] => [
-  createBackAction(
-    replaceId
-      ? `/replace-plan?account=${encodeURIComponent(
-          account
-        )}&planId=${replaceId}`
-      : `/add-plan?account=${encodeURIComponent(account)}`,
-    "Back to Plan Selection",
-    0
-  ),
-  createSignOutAction("/login", "Sign Out", 1),
-];
+  replaceId?: string | null,
+  accountId?: number | null
+): HeaderAction[] => {
+  const baseUrl = replaceId
+    ? `/replace-plan?${new URLSearchParams({
+        account: account,
+        planId: replaceId,
+        ...(accountId && { accountId: accountId.toString() }),
+      }).toString()}`
+    : `/add-plan?${new URLSearchParams({
+        account: account,
+        ...(accountId && { accountId: accountId.toString() }),
+      }).toString()}`;
+
+  return [
+    createBackAction(baseUrl, "Back to Plan Selection", 0),
+    createSignOutAction("/login", "Sign Out", 1),
+  ];
+};

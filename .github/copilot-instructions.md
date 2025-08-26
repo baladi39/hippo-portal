@@ -321,7 +321,7 @@ export class BidsRepo {
     } catch (error) {
       console.error(
         `Error in BidsRepo.updateStatus(${bidId}, ${status}):`,
-        error,
+        error
       );
       throw error;
     }
@@ -609,7 +609,144 @@ When creating new service actions:
 
 Follow the established patterns for consistency across the codebase.
 
-## 📋 Best Practices
+## � Loading States & Hydration Management
+
+### **Always Use loading.tsx Files**
+
+To prevent hydration errors and provide consistent loading experiences:
+
+#### **Page-Level Loading** (`app/{feature}/loading.tsx`)
+
+- **Required**: Create a `loading.tsx` file for every page that fetches data
+- **Purpose**: Prevents hydration mismatches during initial page load
+- **Structure**: Match the layout structure of your actual page
+
+```typescript
+// Example: app/accounts/loading.tsx
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
+
+export default function AccountsLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - Static elements */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-gray-900">Hippo Portal</h1>
+            <div className="flex gap-2">
+              <Link href="/login">
+                <Button variant="ghost">Sign Out</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - Skeleton structure */}
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Accounts</h2>
+          <p className="text-gray-600">Loading account data...</p>
+        </div>
+
+        {/* Skeleton components matching actual layout */}
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <div className="flex gap-4">
+              <Skeleton className="h-10 flex-1" />
+              <Skeleton className="h-10 w-20" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data table skeleton */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+```
+
+#### **Global Loading** (`app/loading.tsx`)
+
+- **Purpose**: Fallback for routes without specific loading components
+- **Keep Generic**: Don't make assumptions about page structure
+
+```typescript
+// app/loading.tsx
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function Loading() {
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-9 w-20" />
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-5 w-96" />
+        </div>
+
+        <div className="space-y-6">
+          <Skeleton className="h-64 w-full rounded-lg" />
+          <Skeleton className="h-96 w-full rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+### **Hydration Error Prevention Rules**
+
+1. **❌ NEVER use hydration handling in components**:
+
+   ```typescript
+   // DON'T DO THIS
+   const [mounted, setMounted] = useState(false);
+   useEffect(() => setMounted(true), []);
+   if (!mounted) return <LoadingFallback />;
+   ```
+
+2. **✅ DO use loading.tsx instead**:
+
+   ```typescript
+   // Create app/{feature}/loading.tsx with proper skeleton
+   // Let Next.js handle the loading state automatically
+   ```
+
+3. **Static Elements**: Include non-dynamic elements (headers, navigation) in loading components
+4. **Skeleton Matching**: Ensure skeleton components match the structure of loaded content
+5. **Consistent Styling**: Use the same layout classes and spacing as the actual page
+
+### **Loading Component Guidelines**
+
+- **File Naming**: Always use `loading.tsx` (lowercase)
+- **Export**: Default export the loading component
+- **Static Content**: Include headers, navigation, and other static elements
+- **Skeleton Components**: Use `@/components/ui/skeleton` for placeholder content
+- **Layout Consistency**: Match the grid, spacing, and structure of the actual page
+- **No State**: Loading components should not contain any state or dynamic logic
+
+## �📋 Best Practices
 
 - **Always use TokenService** for authenticated requests
 - **Implement proper error handling** at each layer
@@ -620,3 +757,4 @@ Follow the established patterns for consistency across the codebase.
 - **Follow the established naming conventions**
 - **Keep actions thin** - delegate to repositories/services
 - **Handle edge cases** (missing tokens, network errors, invalid responses)
+- **Always create loading.tsx files** - prevents hydration errors and improves UX

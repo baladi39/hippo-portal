@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table";
 import { MoreHorizontal, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
   fetchPlansWithAccounts,
@@ -37,16 +38,15 @@ import {
 } from "./actions";
 
 export default function AccountsPage() {
+  const router = useRouter();
   const [plans, setPlans] = useState<PlanDto[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [mounted, setMounted] = useState(false);
   const [summaryData, setSummaryData] = useState<DashboardSummary | null>(null);
   const [accountsData, setAccountsData] = useState<any[]>([]);
 
   useEffect(() => {
-    setMounted(true);
     loadPlans();
   }, []);
 
@@ -84,28 +84,48 @@ export default function AccountsPage() {
 
     setLoading(true);
     try {
+      // IN CASE WE WANT TO JUST SHOW SEARCH RESULTS IN THE TABLE
+
+      // const searchResponse = await searchPlansWithAccounts(searchTerm);
+      // setPlans(searchResponse.plans);
+
+      // // Update accounts data based on search results
+      // const filteredAccountsData = searchResponse.plans.map((plan) => ({
+      //   accountId: plan.accountId,
+      //   accountName: plan.accountName,
+      //   accountOfficeDivision: plan.accountOfficeDivision,
+      //   accountPrimarySalesLead: plan.accountPrimarySalesLead || "TBD",
+      //   accountClassification: plan.accountClassification || "TBD",
+      //   carrier: plan.carrier,
+      //   planType: plan.planType,
+      //   planName: plan.planName,
+      //   policyGroupNumber: plan.policyGroupNumber || "TBD",
+      //   effectiveDate: new Date(plan.effectiveDate).toLocaleDateString(),
+      //   renewalDate: new Date(plan.renewalDate).toLocaleDateString(),
+      //   enrollment: plan.enrollment || "TBD",
+      //   annualRevenue: plan.annualRevenue || "TBD",
+      //   planId: plan.planId,
+      // }));
+
+      // setAccountsData(filteredAccountsData);
+      // setError("");
+
       const searchResponse = await searchPlansWithAccounts(searchTerm);
-      setPlans(searchResponse.plans);
 
-      // Update accounts data based on search results
-      const filteredAccountsData = searchResponse.plans.map((plan) => ({
-        accountId: plan.accountId,
-        accountName: plan.accountName,
-        accountOfficeDivision: plan.accountOfficeDivision,
-        accountPrimarySalesLead: plan.accountPrimarySalesLead || "TBD",
-        accountClassification: plan.accountClassification || "TBD",
-        carrier: plan.carrier,
-        planType: plan.planType,
-        planName: plan.planName,
-        policyGroupNumber: plan.policyGroupNumber || "TBD",
-        effectiveDate: new Date(plan.effectiveDate).toLocaleDateString(),
-        renewalDate: new Date(plan.renewalDate).toLocaleDateString(),
-        enrollment: plan.enrollment || "TBD",
-        annualRevenue: plan.annualRevenue || "TBD",
-        planId: plan.planId,
-      }));
+      // If we have search results, navigate to the first result's account dashboard
+      if (searchResponse.plans && searchResponse.plans.length > 0) {
+        const firstResult = searchResponse.plans[0];
+        router.push(
+          `/account-dashboard?account=${encodeURIComponent(
+            firstResult.accountName
+          )}`
+        );
+        return;
+      }
 
-      setAccountsData(filteredAccountsData);
+      // If no results, update the state to show empty results
+      setPlans([]);
+      setAccountsData([]);
       setError("");
     } catch (error) {
       console.error("Failed to search:", error);
@@ -117,43 +137,9 @@ export default function AccountsPage() {
     }
   };
 
-  // Prevent hydration mismatch by not rendering dynamic content until mounted
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Hippo Portal</h1>
-              <div className="flex gap-2">
-                <Link href="/login">
-                  <Button variant="ghost">Sign Out</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-2">Accounts</h2>
-            <p className="text-gray-600">
-              Manage your client accounts and their benefit plans
-            </p>
-          </div>
-
-          <Card className="mb-6">
-            <CardContent className="p-6">
-              <div className="text-center py-8">Loading...</div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Page Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
@@ -189,7 +175,9 @@ export default function AccountsPage() {
                   className="pl-10"
                 />
               </div>
+              {/* Search Button */}
               <Button type="submit">Search</Button>
+              {/* Clear Button */}
               <Button
                 type="button"
                 variant="outline"
